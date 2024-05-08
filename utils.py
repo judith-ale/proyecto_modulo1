@@ -882,7 +882,7 @@ class NNForecast:
 
     # dividir una secuencia univariada en muestras
     def split_sequence_m_step(self, timeseries=None, n_steps_in=3, n_steps_out=1, multivariate=False):
-      """Separación de los datos por pasos
+        """Separación de los datos por pasos
 
         Separa las series de tiempo por pasos temporales de entrada y de salida
         para poder hacer modelos supervisados con las series de tiempo.
