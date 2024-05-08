@@ -29,6 +29,8 @@ import tensorflow as tf
 
 import optuna
 
+import gc
+
 # Ignorar warnings
 import warnings
 warnings.filterwarnings("ignore")
@@ -410,15 +412,21 @@ class LinearForecast:
                 seasonal_order=seasonal
             )
             try:
-                results = mod.fit(disp=False)
+                print('low_memory')
+                results = mod.fit(disp=False, low_memory=True)
     
                 resultados.loc[i, 'params'] = str((non_seasonal, seasonal, trend))
                 resultados.loc[i,'AIC'] = results.aic
                 resultados.loc[i,'BIC'] = results.bic
                 resultados.loc[i,'LLF'] = results.llf
+                print(f'> {str((non_seasonal, seasonal, trend))}: AIC: {round(results.aic, 3)}')
                 i += 1
             except:
                 pass
+            
+            del mod
+            del results
+            gc.collect()
 
         return resultados.sort_values(by=[sorting], ascending=ascending)
 
