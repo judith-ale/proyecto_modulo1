@@ -421,11 +421,12 @@ class LinearForecast:
                 resultados.loc[i,'LLF'] = results.llf
                 print(f'> {str((non_seasonal, seasonal, trend))}: AIC: {round(results.aic, 3)}')
                 i += 1
+                del results
             except:
                 pass
             
             del mod
-            del results
+            
             gc.collect()
 
         return resultados.sort_values(by=[sorting], ascending=ascending)
