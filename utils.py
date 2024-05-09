@@ -586,6 +586,7 @@ class NNForecast:
         self.x_label = x_label
         self.y_label = y_label
         self.timeseries = timeseries
+        self.models = {}
 
     def set_x_label(self, x_label='Time'):
         """Actualiza el valor del atributo x_label
@@ -929,87 +930,87 @@ class NNForecast:
             y.append(seq_y)
         return np.array(X), np.array(y)
 
+    def delete_model(self, model_name):
+        del self.models[model_name]
+        print(f'{model_name} model deleted')
+
+    
     # Modelos redes neuronales secuenciales multicapa, 3 en total,
     # donde cada uno tiene una capa densa más que el modelo anterior.
-    def MLP_models(self, n_steps_in=3, n_steps_out=1, n_features=1, **kwargs):
-        self.models_MLP = []
-        for i in range(3):
-            self.models_MLP.append(
-                tf.keras.Sequential([
+    def MLP_model(self, n_steps_in=3, n_steps_out=1, n_features=1, **kwargs):
+        model_MLP = tf.keras.Sequential([
                     tf.keras.layers.Input(shape=(n_steps_in * n_features, )),
-                    *[tf.keras.layers.Dense(100, activation='relu') for j in range(i + 1)],
+                    *[tf.keras.layers.Dense(100, activation='relu') for j in range(3)],
                     tf.keras.layers.Dense(100, activation='relu'),
                     tf.keras.layers.Dense(n_steps_out)
-                ])
-            )
+                    ])
 
-            # Compilar el modelo
-            self.models_MLP[i].compile(**kwargs)
+        # Compilar el modelo
+        model_MLP.compile(**kwargs)
+        self.models['MLP'] = model_MLP
 
     # Modelos redes neuronales convolucionales, 3 en total,
     # donde cada uno tiene una capa convolucional más que el modelo anterior.
-    def CNN_models(self, n_steps_in=3, n_steps_out=1, n_features=1, padding='valid', **kwargs):
-        self.models_CNN = []
-        for i in range(3):
-            self.models_CNN.append(
-                tf.keras.Sequential([
+    def CNN_model(self, n_steps_in=3, n_steps_out=1, n_features=1, padding='valid', **kwargs):
+        model_CNN = tf.keras.Sequential([
                     tf.keras.layers.Input(shape=(n_steps_in, n_features, )),
-                    *[tf.keras.layers.Conv1D(64, 2, activation='relu', padding=padding) for j in range(i + 1)],
+                    *[tf.keras.layers.Conv1D(64, 2, activation='relu', padding=padding) for j in range(3)],
                     tf.keras.layers.MaxPooling1D(),
                     tf.keras.layers.Flatten(),
                     tf.keras.layers.Dense(100, activation='relu'),
                     tf.keras.layers.Dense(n_steps_out)
-                ])
-            )
-            # Compilar el modelo
-            self.models_CNN[i].compile(**kwargs)
+                    ])
+        
+        # Compilar el modelo
+        model_CNN.compile(**kwargs)
+        self.models['CNN'] = model_CNN
 
     # Modelos redes neuronales recurrentes, 3 en total,
     # donde cada uno tiene una capa LSTM más que el modelo anterior, que se apilan.
-    def RNN_models(self, n_steps_in=3, n_steps_out=1, n_features=1, **kwargs):
-        self.models_RNN = []
-        for i in range(3):
-            self.models_RNN.append(
-                tf.keras.Sequential([
+    def RNN_model(self, n_steps_in=3, n_steps_out=1, n_features=1, **kwargs):
+        model_RNN = tf.keras.Sequential([
                     tf.keras.layers.Input(shape=(n_steps_in, n_features, )),
-                    *[tf.keras.layers.LSTM(100, activation='relu', return_sequences=True,) for j in range(i + 1)],
+                    *[tf.keras.layers.LSTM(100, activation='relu', return_sequences=True,) for j in range(3)],
                     tf.keras.layers.LSTM(100, activation='relu'),
                     tf.keras.layers.Dense(n_steps_out)
-                ])
-            )
-            # Compilar el modelo
-            self.models_RNN[i].compile(**kwargs)
+                    ])
+        
+        # Compilar el modelo
+        model_RNN.compile(**kwargs)
+        self.models['RNN'] = model_RNN
 
     # Modelos redes neuronales CNN-LSTM, 3 en total,
     # donde cada uno tiene una capa densa más en cada subsecuencia
     # de entrada que el modelo anterior.
-    def CNN_LSTM_models(self, n_steps_in=3, n_steps_out=1, n_features=1, n_seq=2, padding='valid' , **kwargs):
-        self.models_CNN_LSTM = []
-        for i in range(3):
-            self.models_CNN_LSTM.append(
-                tf.keras.Sequential([
-                    tf.keras.layers.Input(shape=(None, int(n_steps_in/n_seq), n_features, )),
-                    *[ tf.keras.layers.TimeDistributed(tf.keras.layers.Conv1D(64, 1, activation='relu', padding=padding)) for j in range(i + 1)],
-                    tf.keras.layers.TimeDistributed(tf.keras.layers.MaxPooling1D(pool_size=n_seq, padding=padding)),
-                    tf.keras.layers.TimeDistributed(tf.keras.layers.Flatten()),
-                    tf.keras.layers.LSTM(100, activation='relu'),
-                    tf.keras.layers.Dense(n_steps_out)
-                ])
-            )
-            # Compilar el modelo
-            self.models_CNN_LSTM[i].compile(**kwargs)
+    def CNN_LSTM_model(self, n_steps_in=3, n_steps_out=1, n_features=1, n_seq=2, padding='valid', **kwargs):
+        model_CNN_LSTM = tf.keras.Sequential([
+                            tf.keras.layers.Input(shape=(None, int(n_steps_in/n_seq), n_features, )),
+                            *[ tf.keras.layers.TimeDistributed(tf.keras.layers.Conv1D(64, 1, activation='relu', padding=padding)) for j in range(3)],
+                            tf.keras.layers.TimeDistributed(tf.keras.layers.MaxPooling1D(pool_size=n_seq, padding=padding)),
+                            tf.keras.layers.TimeDistributed(tf.keras.layers.Flatten()),
+                            tf.keras.layers.LSTM(100, activation='relu'),
+                            tf.keras.layers.Dense(n_steps_out)
+                            ])
+        
+        # Compilar el modelo
+        model_CNN_LSTM.compile(**kwargs)
+        self.models['CNN_LSTM'] = model_CNN_LSTM
 
     # Entrenamiento de las 3 arquitecturas de cada tipo de modelo
     def fit_models(self, tr_X, tr_y, val_X, val_y, n_seq=2, n_steps_in=3, n_features=1, **kwargs):
         self.history = {}
 
-        self.history['MLP'] = [m.fit(tr_X.reshape(tr_X.shape[0], -1), tr_y, validation_data=(val_X.reshape(val_X.shape[0], -1), val_y), **kwargs).history for m in self.models_MLP]
-        self.history['CNN'] = [m.fit(tr_X, tr_y, validation_data=(val_X, val_y), **kwargs).history for m in self.models_CNN]
-        self.history['RNN'] = [m.fit(tr_X, tr_y, validation_data=(val_X, val_y), **kwargs).history for m in self.models_RNN]
-        self.history['CNN_LSTM'] = [m.fit(tr_X.reshape((tr_X.shape[0], n_seq, int(n_steps_in / n_seq), n_features)),
-                                                    tr_y, validation_data=(
-                                                        val_X.reshape((val_X.shape[0], n_seq, int(n_steps_in / n_seq), n_features)),
-                                                        val_y),
-                                                    **kwargs) for m in self.models_CNN_LSTM]
+        for name, model in self.models.items():
+            if name == 'MLP':
+                tr_X_reshaped = tr_X.reshape(tr_X.shape[0], -1)
+                val_X_reshaped = val_X.reshape(val_X.shape[0], -1)
+            elif name == 'CNN_LSTM':
+                tr_X_reshaped = tr_X.reshape((tr_X.shape[0], n_seq, int(n_steps_in / n_seq), n_features))
+                val_X_reshaped = val_X.reshape((val_X.shape[0], n_seq, int(n_steps_in / n_seq), n_features))
+            else:
+                tr_X_reshaped = tr_X
+                val_X_reshaped = val_X
+
+            self.history[name] = model.fit(tr_X_reshaped, tr_y, validation_data=(val_X_reshaped, val_y), **kwargs).history
 
         return self.history
