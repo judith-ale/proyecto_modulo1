@@ -951,7 +951,7 @@ class NNForecast:
 
     # Modelos redes neuronales convolucionales, 3 en total,
     # donde cada uno tiene una capa convolucional más que el modelo anterior.
-    def CNN_models(self, n_steps_in=3, n_steps_out=1, n_features=1, padding='valid', **kwargs):
+    def CNN_model(self, n_steps_in=3, n_steps_out=1, n_features=1, padding='valid', **kwargs):
         model_CNN = tf.keras.Sequential([
                     tf.keras.layers.Input(shape=(n_steps_in, n_features, )),
                     *[tf.keras.layers.Conv1D(64, 2, activation='relu', padding=padding) for j in range(3)],
@@ -967,7 +967,7 @@ class NNForecast:
 
     # Modelos redes neuronales recurrentes, 3 en total,
     # donde cada uno tiene una capa LSTM más que el modelo anterior, que se apilan.
-    def RNN_models(self, n_steps_in=3, n_steps_out=1, n_features=1, **kwargs):
+    def RNN_model(self, n_steps_in=3, n_steps_out=1, n_features=1, **kwargs):
         model_RNN = tf.keras.Sequential([
                     tf.keras.layers.Input(shape=(n_steps_in, n_features, )),
                     *[tf.keras.layers.LSTM(100, activation='relu', return_sequences=True,) for j in range(3)],
@@ -976,13 +976,13 @@ class NNForecast:
                     ])
         
         # Compilar el modelo
-        self.models_RNN[i].compile(**kwargs)
+        model_RNN.compile(**kwargs)
         self.models['RNN'] = model_RNN
 
     # Modelos redes neuronales CNN-LSTM, 3 en total,
     # donde cada uno tiene una capa densa más en cada subsecuencia
     # de entrada que el modelo anterior.
-    def CNN_LSTM_models(self, n_steps_in=3, n_steps_out=1, n_features=1, n_seq=2, padding='valid', **kwargs):
+    def CNN_LSTM_model(self, n_steps_in=3, n_steps_out=1, n_features=1, n_seq=2, padding='valid', **kwargs):
         model_CNN_LSTM = tf.keras.Sequential([
                             tf.keras.layers.Input(shape=(None, int(n_steps_in/n_seq), n_features, )),
                             *[ tf.keras.layers.TimeDistributed(tf.keras.layers.Conv1D(64, 1, activation='relu', padding=padding)) for j in range(3)],
